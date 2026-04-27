@@ -1,0 +1,2 @@
+Main-Class: com.ljuniversity.companion.Main
+Class-Path: mysql-connector-j-9.7.0.jar gson-2.13.1.jar
