@@ -12,10 +12,7 @@ import com.google.gson.*;
 
 class ChatbotConsole { // Renamed for clarity
 
-    // ======================== API CONFIG ========================
-    // Note: API key is different from CareerGuidance, using this one for console
-    private static final String API_KEY = "AIzaSyC7l3wysjjSzsuSAHnUGyjfX3mEv91Zy8U";
-    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    // Network requests use the shared opt-in GeminiClient.
 
     // ❌ REMOVED: Message record (Now imported from com.ljuniversity.companion.model.Message)
 

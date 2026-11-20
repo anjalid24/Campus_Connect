@@ -28,6 +28,11 @@ import java.sql.*;
 
 
 class EventsLeaderboardUI {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+
     static final String DB_URL = "jdbc:mysql://localhost:3306/campus-connect";
     static final String USER = "root";
     static final String PASS = "";
@@ -421,7 +426,7 @@ class EventsLeaderboardUI {
     }
 
     private void loadLeaderboardData(JPanel container) throws Exception {
-        try (Connection con = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection con = openConfiguredConnection(DB_URL, USER, PASS);
 
              PreparedStatement pst = con.prepareStatement("SELECT name, enrollment_no, " +
                      "(SELECT SUM(points_earned) FROM participants p WHERE p.enrollment_no = u.enrollment_no) AS total_points " +

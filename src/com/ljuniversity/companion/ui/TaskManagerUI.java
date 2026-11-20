@@ -16,10 +16,15 @@ import java.sql.*;
  * (UI Logic)
  */
 public class TaskManagerUI extends JFrame {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+
     // JDBC connection variables
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/campus-connect";
-    private static final String DB_USER = "root";
-    private static final String DB_PASS = "";
+    private static final String DB_URL = com.ljuniversity.companion.util.AppConfig.databaseUrl();
+    private static final String DB_USER = com.ljuniversity.companion.util.AppConfig.databaseUser();
+    private static final String DB_PASS = com.ljuniversity.companion.util.AppConfig.databasePassword();
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
 
     // UI Components
@@ -46,7 +51,7 @@ public class TaskManagerUI extends JFrame {
 
         try {
             Class.forName(DB_DRIVER);
-            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+            connection = openConfiguredConnection(DB_URL, DB_USER, DB_PASS);
         } catch (Exception e) {
             showError("Database connection failed: " + e.getMessage());
             // In a production app, you might not exit here, but allow the UI to show an error state.
@@ -102,7 +107,7 @@ public class TaskManagerUI extends JFrame {
     // Toggle fullscreen/windowed
     private void toggleFullscreen() {
         isFullscreen = !isFullscreen;
-        dispose();
+        super.dispose();
         setUndecorated(isFullscreen);
         setExtendedState(isFullscreen ? JFrame.MAXIMIZED_BOTH : JFrame.NORMAL);
         setVisible(true);

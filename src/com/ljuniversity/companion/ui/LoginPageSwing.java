@@ -9,12 +9,17 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.*;
 
-public class LoginPageSwing extends JFrame { // Changed class access to public
+public class LoginPageSwing extends JFrame {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+ // Changed class access to public
 
     // --- Backend Logic ---
-    private static final String URL = "jdbc:mysql://localhost:3306/campus-connect";
-    private static final String USER = "root";
-    private static final String PASSWORD = "";
+    private static final String URL = com.ljuniversity.companion.util.AppConfig.databaseUrl();
+    private static final String USER = com.ljuniversity.companion.util.AppConfig.databaseUser();
+    private static final String PASSWORD = com.ljuniversity.companion.util.AppConfig.databasePassword();
 
     private Connection conn;
 
@@ -114,7 +119,7 @@ public class LoginPageSwing extends JFrame { // Changed class access to public
 
     private void connectToDatabase() {
         try {
-            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            conn = openConfiguredConnection(URL, USER, PASSWORD);
             System.out.println(" Database connected successfully!");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -149,7 +154,7 @@ public class LoginPageSwing extends JFrame { // Changed class access to public
             try (PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, erno);
                 ps.setString(2, username);
-                ps.setString(3, pass);
+                ps.setString(3, com.ljuniversity.companion.util.Passwords.hash(pass));
 
                 int rowsAffected = ps.executeUpdate();
 
@@ -204,18 +209,19 @@ public class LoginPageSwing extends JFrame { // Changed class access to public
             }
 
             String query = "SELECT password FROM loginPage WHERE enrollment_no = ?";
-            PreparedStatement ps = conn.prepareStatement(query);
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, erno.trim());
 
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) {
                 String dbPass = rs.getString("password");
-                return dbPass.equals(pass);
+                return com.ljuniversity.companion.util.Passwords.verify(pass, dbPass);
             } else {
                 return false;
             }
-
+            }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

@@ -14,6 +14,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 public class FacultyFeedback extends JFrame {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+
     private final String LOGO_PATH = "logo.png"; // Replace with your logo file if available
     private final String DB_URL = "jdbc:mysql://localhost:3306/campus-connect";
     private final String USER = "root";
@@ -190,7 +195,7 @@ public class FacultyFeedback extends JFrame {
 
         // Submit Action
         submitBtn.addActionListener(e -> {
-            try (Connection con = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            try (Connection con = openConfiguredConnection(DB_URL, USER, PASS)) {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 for (int i = 0; i < facultyList.size(); i++) {
                     Map<String, String> faculty = facultyList.get(i);

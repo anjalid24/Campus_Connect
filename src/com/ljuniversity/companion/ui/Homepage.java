@@ -14,6 +14,11 @@ import java.util.List;
  * (UI Logic)
  */
 final class HomePageSwing {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+
 
     // Color palette for the app (blue/white theme)
     private static final Color BLUE_DARK = new Color(25, 118, 210);
@@ -25,9 +30,9 @@ final class HomePageSwing {
     private static final Color SHADOW = new Color(0, 0, 0, 30);
 
     // Database credentials
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/campus-connect";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "";
+    private static final String DB_URL = com.ljuniversity.companion.util.AppConfig.databaseUrl();
+    private static final String DB_USER = com.ljuniversity.companion.util.AppConfig.databaseUser();
+    private static final String DB_PASSWORD = com.ljuniversity.companion.util.AppConfig.databasePassword();
 
     /**
      * Entry point to show the home page UI.
@@ -62,7 +67,7 @@ final class HomePageSwing {
         // Logo (top right) - Loading from classpath (assuming img.png is the college logo)
         ImageIcon scaledLogoIcon = null;
         try {
-            ImageIcon originalLogoIcon = new ImageIcon(HomePageSwing.class.getResource("/src/resource/img.png"));
+            ImageIcon originalLogoIcon = new ImageIcon(HomePageSwing.class.getResource("/img.png"));
             Image originalLogoImage = originalLogoIcon.getImage();
             Image newImg = originalLogoImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
             scaledLogoIcon = new ImageIcon(newImg);
@@ -239,7 +244,7 @@ final class HomePageSwing {
             return winners;
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = openConfiguredConnection(DB_URL, DB_USER, DB_PASSWORD);
              CallableStatement stmt = conn.prepareCall(sql)) {
 
             stmt.setInt(1, limit);

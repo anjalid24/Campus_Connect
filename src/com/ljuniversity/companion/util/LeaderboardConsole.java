@@ -7,6 +7,11 @@ import java.util.*;
 
 
 public class LeaderboardConsole {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+
 
     static final String DB_URL = "jdbc:mysql://localhost:3306/events";
     static final String USER = "root";
@@ -21,7 +26,7 @@ public class LeaderboardConsole {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             // NOTE: This DB URL 'events' is different from the UI's 'campus-connect'.
-            con = DriverManager.getConnection(DB_URL, USER, PASS);
+            con = openConfiguredConnection(DB_URL, USER, PASS);
 
             // Using subquery instead of JOIN to fetch leaderboard data
             String query = "SELECT name, enrollment_no, " +

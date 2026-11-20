@@ -1,66 +1,37 @@
 package com.ljuniversity.companion.util;
 
-import com.ljuniversity.companion.model.Message;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
+import com.google.gson.*;
 import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.net.http.*;
+import java.time.Duration;
 
-/**
- * Client for interacting with the Gemini API.
- * Extracted from gemAI.java and CareerGuidance.java.
- */
+/** Optional network client. Nothing is sent without an explicitly configured key. */
 public class GeminiClient {
-
-    // Use the API key from CareerGuidance for consistency, but note it's incomplete
-    private static final String API_KEY = "AIzaSyBpQAbNmd1xebiej4vQxwh1KlHegUyHFtI";
-    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
-
-    public String sendMessage(String userMessage) {
-        try {
-            // Simplified JSON payload using the structure from the source files
-            String jsonInput = "{\"contents\":[{\"parts\":[{\"text\":\"" + escapeJson(userMessage) + "\"}]}]}";
-
-            HttpURLConnection conn = (HttpURLConnection) new URI(API_URL).toURL().openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-
-            try (OutputStream os = conn.getOutputStream()) {
-                os.write(jsonInput.getBytes(StandardCharsets.UTF_8));
-            }
-
-            InputStream is = conn.getResponseCode() >= 400 ? conn.getErrorStream() : conn.getInputStream();
-            String jsonResponse = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-
-            JsonObject jsonObject = JsonParser.parseString(jsonResponse).getAsJsonObject();
-            JsonArray candidates = jsonObject.getAsJsonArray("candidates");
-
-            if (candidates != null && candidates.size() > 0) {
-                JsonArray parts = candidates.get(0)
-                        .getAsJsonObject().getAsJsonObject("content")
-                        .getAsJsonArray("parts");
-                return parts.get(0).getAsJsonObject().get("text").getAsString();
-            }
-            return "No response from Gemini.";
-
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
-        }
-    }
-
-    private String escapeJson(String str) {
-        return str.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
+    public String sendMessage(String message) {
+        String key = System.getenv("GEMINI_API_KEY");
+        if (key == null || key.isBlank()) return "AI is not connected. Configure your own GEMINI_API_KEY to opt in. Do not send sensitive information.";
+        if (message == null || message.isBlank() || message.length() > 8000) return "Enter a message between 1 and 8000 characters.";
+        String model = System.getenv().getOrDefault("GEMINI_MODEL", "gemini-2.5-flash");
+        if (!model.matches("[a-zA-Z0-9._-]+")) return "Invalid GEMINI_MODEL configuration.";
+        JsonObject part = new JsonObject(); part.addProperty("text", message);
+        JsonArray parts = new JsonArray(); parts.add(part);
+        JsonObject content = new JsonObject(); content.add("parts", parts);
+        JsonArray contents = new JsonArray(); contents.add(content);
+        JsonObject body = new JsonObject(); body.add("contents", contents);
+        try (HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()) {
+            HttpRequest request = HttpRequest.newBuilder(URI.create("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"))
+                .timeout(Duration.ofSeconds(30)).header("Content-Type", "application/json").header("x-goog-api-key", key)
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) return "AI request was not accepted (HTTP " + response.statusCode() + "). Check your account, quota and model settings. No provider error details are logged.";
+            JsonArray candidates = JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("candidates");
+            if (candidates == null || candidates.isEmpty()) return "No text response was returned.";
+            JsonArray output = candidates.get(0).getAsJsonObject().getAsJsonObject("content").getAsJsonArray("parts");
+            StringBuilder result = new StringBuilder();
+            for (JsonElement item : output) if (item.getAsJsonObject().has("text")) result.append(item.getAsJsonObject().get("text").getAsString());
+            return result.isEmpty() ? "No text response was returned." : result.toString();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); return "AI request cancelled.";
+        } catch (Exception e) { return "AI is unavailable. Check your network and configuration, then try again."; }
     }
 }

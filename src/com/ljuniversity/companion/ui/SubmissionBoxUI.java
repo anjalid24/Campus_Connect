@@ -12,10 +12,15 @@ import java.sql.*;
  * (UI Logic)
  */
 public class SubmissionBoxUI extends JFrame {
+    private static java.sql.Connection openConfiguredConnection(String url, String user, String password) throws java.sql.SQLException {
+        com.ljuniversity.companion.util.AppConfig.requireDatabase();
+        return java.sql.DriverManager.getConnection(url, user, password);
+    }
+
     // JDBC connection variables (same as terminal code)
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/campus-connect";
-    private static final String DB_USER = "root";
-    private static final String DB_PASS = "";
+    private static final String DB_URL = com.ljuniversity.companion.util.AppConfig.databaseUrl();
+    private static final String DB_USER = com.ljuniversity.companion.util.AppConfig.databaseUser();
+    private static final String DB_PASS = com.ljuniversity.companion.util.AppConfig.databasePassword();
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
 
     // UI components
@@ -212,7 +217,7 @@ public class SubmissionBoxUI extends JFrame {
             return;
         }
 
-        try (Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+        try (Connection con = openConfiguredConnection(DB_URL, DB_USER, DB_PASS)) {
             // Insert only into complainbox (trigger will set status = 'Pending')
             String query = "INSERT INTO complainbox (complain) VALUES (?)";
             try (PreparedStatement ps = con.prepareStatement(query)) {
