@@ -2,6 +2,8 @@
 
 ### A little focus. A better day.
 
+[View the desktop showcase](https://campus-connect-desktop.vercel.app/) · [Download the Java 21+ desktop JAR](https://campus-connect-desktop.vercel.app/campus-connect.jar)
+
 An offline-first **Java Swing desktop workspace** for personal student planning. A calm navy-and-ivory interface, a planner that actually saves, and room to explore what comes next.
 
 **This is a personal student project, not an official university portal.** The desktop app runs on your computer. Its web showcase contains screenshots and a downloadable Java application, not a browser version of Swing.
